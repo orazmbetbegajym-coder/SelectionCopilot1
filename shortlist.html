@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Шорт-лист — Selection Copilot</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        .stat-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            transition: border-color 0.2s;
+        }
+        .stat-card:hover { border-color: var(--accent); }
+        .stat-icon { font-size: 22px; margin-bottom: 4px; }
+        .stat-num { font-family: 'Syne', sans-serif; font-size: 36px; font-weight: 800; line-height: 1; }
+        .stat-label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--text3); }
+
+        .accuracy-bar-wrap { display: flex; flex-direction: column; gap: 10px; }
+        .accuracy-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+        .accuracy-label { width: 160px; color: var(--text2); flex-shrink: 0; }
+        .accuracy-track { flex: 1; height: 8px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+        .accuracy-fill { height: 100%; border-radius: 99px; }
+        .accuracy-num { width: 38px; text-align: right; font-weight: 600; font-size: 13px; }
+
+        .cand-card {
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: block;
+            color: var(--text);
+            position: relative;
+            overflow: hidden;
+        }
+        .cand-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+        }
+        .cand-card.strong::before { background: var(--green); }
+        .cand-card.review::before { background: var(--yellow); }
+        .cand-card.hold::before { background: var(--red); }
+        .cand-card:hover { border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 10px 32px rgba(0,0,0,0.5); }
+
+        .cand-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px; }
+        .cand-rank { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+        .cand-name { font-family: 'Syne', sans-serif; font-size: 19px; font-weight: 700; }
+        .cand-sub { font-size: 12px; color: var(--text3); margin-top: 3px; }
+        .cand-score-big { font-family: 'Syne', sans-serif; font-size: 38px; font-weight: 800; color: var(--accent); line-height: 1; }
+        .cand-score-label { font-size: 10px; color: var(--text3); text-transform: uppercase; }
+
+        .cand-bars { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; }
+        .cand-bar-row { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+        .cand-bar-label { width: 90px; color: var(--text3); flex-shrink: 0; }
+        .cand-bar-track { flex: 1; height: 4px; background: var(--surface3); border-radius: 99px; overflow: hidden; }
+        .cand-bar-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+        .cand-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 12px; border-top: 1px solid var(--border); font-size: 12px; color: var(--text3); }
+
+        .pipeline { display: flex; align-items: center; overflow-x: auto; padding: 8px 0; flex-wrap: wrap; gap: 4px; }
+        .pipeline-box { background: var(--surface2); border: 1px solid var(--border2); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px; font-weight: 600; color: var(--text2); white-space: nowrap; }
+        .pipeline-arrow { color: var(--accent); font-size: 14px; padding: 0 4px; }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <div class="hero">
+        <h1>Shortlist</h1>
+        <p>Панель управления приёмной комиссии inVision U.</p>
+        <div class="top-actions">
+            <a class="btn secondary" href="/apply">← Анализ кандидата</a>
+        </div>
+    </div>
+
+    <!-- PIPELINE -->
+    <div class="card" style="margin-bottom:20px;padding:20px 28px;">
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:12px;">Pipeline</div>
+        <div class="pipeline">
+            <div class="pipeline-box">📥 Input</div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-box">🔬 Feature Extraction</div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-box">⚙️ Scoring Engine</div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-box">📊 Baseline Compare</div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-box">🧠 Behavioral Layer</div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-box">💡 Advice Layer</div>
+            <div class="pipeline-arrow">→</div>
+            <div class="pipeline-box">👤 Reviewer Decision</div>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;">
+        <div class="stat-card">
+            <div class="stat-icon">👥</div>
+            <div class="stat-num">{{ admissions_summary.total_candidates }}</div>
+            <div class="stat-label">Кандидатов</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✅</div>
+            <div class="stat-num" style="color:var(--green);">{{ admissions_summary.strong_shortlist }}</div>
+            <div class="stat-label">Продвинуть</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">✨</div>
+            <div class="stat-num" style="color:#a855f7;">{{ admissions_summary.hidden_potential_cases }}</div>
+            <div class="stat-label">Скрытый потенциал</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">🤖</div>
+            <div class="stat-num" style="color:var(--red);">{{ admissions_summary.high_ai_risk_cases }}</div>
+            <div class="stat-label">Риск ИИ</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-icon">📊</div>
+            <div class="stat-num">{{ admissions_summary.average_score }}</div>
+            <div class="stat-label">Средний score</div>
+        </div>
+    </div>
+
+    <!-- VALIDATION -->
+    <div class="info-grid" style="margin-bottom:20px;">
+        <div class="subcard">
+            <h3>📈 Сравнение с baseline</h3>
+            <div class="accuracy-bar-wrap" style="margin-top:8px;">
+                <div class="accuracy-row">
+                    <span class="accuracy-label">GPA Only (A)</span>
+                    <div class="accuracy-track"><div class="accuracy-fill" style="width:{{ validation_summary.baseline_a_avg }}%;background:var(--text3);"></div></div>
+                    <span class="accuracy-num" style="color:var(--text3);">{{ validation_summary.baseline_a_avg }}</span>
+                </div>
+                <div class="accuracy-row">
+                    <span class="accuracy-label">GPA + Achiev (B)</span>
+                    <div class="accuracy-track"><div class="accuracy-fill" style="width:{{ validation_summary.baseline_b_avg }}%;background:var(--yellow);"></div></div>
+                    <span class="accuracy-num" style="color:var(--yellow);">{{ validation_summary.baseline_b_avg }}</span>
+                </div>
+                <div class="accuracy-row">
+                    <span class="accuracy-label" style="color:var(--accent);font-weight:600;">Selection Copilot</span>
+                    <div class="accuracy-track"><div class="accuracy-fill" style="width:{{ validation_summary.model_avg }}%;background:var(--accent);"></div></div>
+                    <span class="accuracy-num" style="color:var(--accent);">{{ validation_summary.model_avg }}</span>
+                </div>
+            </div>
+            <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);font-size:13px;color:var(--text2);">
+                vs A: <strong style="color:var(--green);">+{{ validation_summary.avg_improvement_a }}</strong>
+                &nbsp;|&nbsp; vs B: <strong style="color:var(--green);">+{{ validation_summary.avg_improvement_b }}</strong>
+            </div>
+        </div>
+
+        <div class="subcard">
+            <h3>🔍 Error Analysis</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface3);border-radius:10px;">
+                    <span style="font-size:13px;color:var(--text2);">Ложные негативы</span>
+                    <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--red);">{{ error_analysis.baseline_false_negatives }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface3);border-radius:10px;">
+                    <span style="font-size:13px;color:var(--text2);">Ложные позитивы</span>
+                    <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--yellow);">{{ error_analysis.baseline_false_positives }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface3);border-radius:10px;">
+                    <span style="font-size:13px;color:var(--text2);">Hidden cases найдено</span>
+                    <span style="font-family:'Syne',sans-serif;font-weight:700;color:#a855f7;">{{ error_analysis.hidden_cases_captured }}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface3);border-radius:10px;">
+                    <span style="font-size:13px;color:var(--text2);">ИИ-риск перехвачен</span>
+                    <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--green);">{{ error_analysis.high_ai_review_cases }}</span>
+                </div>
+            </div>
+        </div>
+
+        {% if validation_dataset.exists %}
+        <div class="subcard">
+            <h3>✅ Точность модели ({{ validation_dataset.total_cases }} cases)</h3>
+            <div class="accuracy-bar-wrap" style="margin-top:8px;">
+                <div class="accuracy-row">
+                    <span class="accuracy-label">Baseline A</span>
+                    <div class="accuracy-track"><div class="accuracy-fill" style="width:{{ validation_dataset.baseline_a_accuracy }}%;background:var(--text3);"></div></div>
+                    <span class="accuracy-num" style="color:var(--text3);">{{ validation_dataset.baseline_a_accuracy }}%</span>
+                </div>
+                <div class="accuracy-row">
+                    <span class="accuracy-label">Baseline B</span>
+                    <div class="accuracy-track"><div class="accuracy-fill" style="width:{{ validation_dataset.baseline_b_accuracy }}%;background:var(--yellow);"></div></div>
+                    <span class="accuracy-num" style="color:var(--yellow);">{{ validation_dataset.baseline_b_accuracy }}%</span>
+                </div>
+                <div class="accuracy-row">
+                    <span class="accuracy-label" style="color:var(--accent);font-weight:600;">Our Model</span>
+                    <div class="accuracy-track"><div class="accuracy-fill" style="width:{{ validation_dataset.model_accuracy }}%;background:var(--accent);"></div></div>
+                    <span class="accuracy-num" style="color:var(--accent);">{{ validation_dataset.model_accuracy }}%</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if admissions_summary.top_recommended_profile_types %}
+        <div class="subcard">
+            <h3>🏆 Топ профили</h3>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">
+                {% for item in admissions_summary.top_recommended_profile_types %}
+                <div style="display:flex;justify-content:space-between;padding:10px 14px;background:var(--surface3);border-radius:10px;">
+                    <span style="font-size:14px;font-weight:600;">{{ item[0] }}</span>
+                    <span style="font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:var(--accent);">{{ item[1] }}</span>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- CANDIDATES -->
+    <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:12px;">
+            <h2 class="section-title" style="margin-bottom:0;">Ranked Candidates</h2>
+            <div style="display:flex;gap:8px;">
+                <span class="badge badge-strong">Advance</span>
+                <span class="badge badge-review">Review</span>
+                <span class="badge badge-hold">Hold</span>
+            </div>
+        </div>
+
+        {% if candidates %}
+        <div class="candidate-cards">
+            {% for candidate in candidates %}
+            <a class="cand-card {{ candidate.recommendation_type }}" href="/candidate/{{ candidate.id }}">
+                <div class="cand-top">
+                    <div>
+                        <div class="cand-rank">#{{ loop.index }}</div>
+                        <div class="cand-name">{{ candidate.name }}</div>
+                        <div class="cand-sub">GPA {{ candidate.gpa }} · {{ candidate.candidate_profile_type.title }}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div class="cand-score-big">{{ candidate.final_score }}</div>
+                        <div class="cand-score-label">score</div>
+                    </div>
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:14px;">
+                    {% if candidate.recommendation_type == "strong" %}
+                        <span class="badge badge-strong">✅ Advance</span>
+                    {% elif candidate.recommendation_type == "review" %}
+                        <span class="badge badge-review">🔍 Review</span>
+                    {% else %}
+                        <span class="badge badge-hold">⏸ Hold</span>
+                    {% endif %}
+                    {% if candidate.hidden_potential %}
+                        <span class="hidden-badge">✨ Hidden</span>
+                    {% endif %}
+                </div>
+
+                <div class="cand-bars">
+                    <div class="cand-bar-row">
+                        <span class="cand-bar-label">Лидерство</span>
+                        <div class="cand-bar-track"><div class="cand-bar-fill" style="width:{{ candidate.leadership_potential }}%"></div></div>
+                        <span style="width:24px;text-align:right;color:var(--text3);font-size:11px;">{{ candidate.leadership_potential }}</span>
+                    </div>
+                    <div class="cand-bar-row">
+                        <span class="cand-bar-label">Рост</span>
+                        <div class="cand-bar-track"><div class="cand-bar-fill" style="width:{{ candidate.growth_trajectory }}%"></div></div>
+                        <span style="width:24px;text-align:right;color:var(--text3);font-size:11px;">{{ candidate.growth_trajectory }}</span>
+                    </div>
+                    <div class="cand-bar-row">
+                        <span class="cand-bar-label">Командность</span>
+                        <div class="cand-bar-track"><div class="cand-bar-fill" style="width:{{ candidate.teamwork_readiness }}%"></div></div>
+                        <span style="width:24px;text-align:right;color:var(--text3);font-size:11px;">{{ candidate.teamwork_readiness }}</span>
+                    </div>
+                </div>
+
+                <div class="cand-footer">
+                    <span>Доказательства: <strong style="color:var(--text);">{{ candidate.evidence_strength }}</strong></span>
+                    {% if candidate.tg_nick %}
+                    <span style="color:var(--accent);">@{{ candidate.tg_nick }}</span>
+                    {% else %}
+                    <span>Открыть →</span>
+                    {% endif %}
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        <!-- TABLE -->
+        <div style="margin-top:32px;padding-top:24px;border-top:1px solid var(--border);">
+            <h3 style="font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-bottom:16px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;">Полная таблица</h3>
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>#</th><th>Имя</th><th>GPA</th><th>Score</th>
+                            <th>Рекомендация</th><th>Hidden</th><th>Telegram</th><th></th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for candidate in candidates %}
+                        <tr>
+                            <td style="color:var(--text3);">{{ loop.index }}</td>
+                            <td><strong>{{ candidate.name }}</strong></td>
+                            <td style="color:var(--text2);">{{ candidate.gpa }}</td>
+                            <td><strong style="color:var(--accent);font-family:'Syne',sans-serif;font-size:16px;">{{ candidate.final_score }}</strong></td>
+                            <td>
+                                {% if candidate.recommendation_type == "strong" %}<span class="badge badge-strong">Advance</span>
+                                {% elif candidate.recommendation_type == "review" %}<span class="badge badge-review">Review</span>
+                                {% else %}<span class="badge badge-hold">Hold</span>{% endif %}
+                            </td>
+                            <td>{% if candidate.hidden_potential %}<span class="hidden-badge">✨</span>{% else %}<span style="color:var(--text3);">—</span>{% endif %}</td>
+                            <td>{% if candidate.tg_nick %}<a class="table-link" href="https://t.me/{{ candidate.tg_nick }}" target="_blank">@{{ candidate.tg_nick }}</a>{% else %}<span style="color:var(--text3);">—</span>{% endif %}</td>
+                            <td><a class="table-link" href="/candidate/{{ candidate.id }}">Открыть →</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% else %}
+        <div style="text-align:center;padding:80px 20px;">
+            <div style="font-size:56px;margin-bottom:16px;">📋</div>
+            <p style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:8px;">Пока нет кандидатов</p>
+            <p class="muted" style="margin-bottom:24px;">Добавьте первого через форму анализа</p>
+            <a class="btn secondary" href="/apply" style="font-size:15px;padding:13px 28px;">Добавить кандидата →</a>
+        </div>
+        {% endif %}
+    </div>
+
+</div>
+</body>
+</html>

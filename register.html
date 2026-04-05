@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selection Copilot — inVision U</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            overflow: hidden;
+        }
+
+        /* Animated background orbs */
+        .bg-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .bg-orb-1 {
+            width: 500px; height: 500px;
+            background: rgba(255, 107, 26, 0.07);
+            top: -150px; right: -100px;
+            animation: float1 8s ease-in-out infinite;
+        }
+        .bg-orb-2 {
+            width: 400px; height: 400px;
+            background: rgba(255, 107, 26, 0.04);
+            bottom: -100px; left: -100px;
+            animation: float2 10s ease-in-out infinite;
+        }
+
+        @keyframes float1 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(-30px, 30px); }
+        }
+        @keyframes float2 {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -20px); }
+        }
+
+        .register-wrap {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 460px;
+            padding: 24px;
+        }
+
+        .register-logo {
+            text-align: center;
+            margin-bottom: 36px;
+            animation: fadeDown 0.5s ease both;
+        }
+
+        .register-logo .logo-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 64px; height: 64px;
+            background: var(--accent);
+            border-radius: 18px;
+            font-size: 28px;
+            margin-bottom: 16px;
+            box-shadow: 0 12px 32px rgba(255,107,26,0.35);
+        }
+
+        .register-logo h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+            background: linear-gradient(135deg, #fff 40%, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 6px;
+        }
+
+        .register-logo p {
+            color: var(--text3);
+            font-size: 14px;
+        }
+
+        .register-card {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 24px;
+            padding: 36px 32px;
+            animation: fadeUp 0.5s ease 0.1s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .register-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent), transparent);
+        }
+
+        .register-card h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .register-card .subtitle {
+            color: var(--text3);
+            font-size: 14px;
+            margin-bottom: 28px;
+        }
+
+        .input-group {
+            margin-bottom: 18px;
+        }
+
+        .input-group label {
+            margin-top: 0;
+            margin-bottom: 8px;
+        }
+
+        .input-with-icon {
+            position: relative;
+        }
+
+        .input-with-icon .icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 16px;
+            pointer-events: none;
+        }
+
+        .input-with-icon input {
+            padding-left: 44px;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 15px;
+            background: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Syne', sans-serif;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.2s ease;
+            letter-spacing: 0.3px;
+        }
+
+        .register-btn:hover {
+            background: var(--accent2);
+            transform: translateY(-1px);
+            box-shadow: 0 10px 28px rgba(255,107,26,0.35);
+        }
+
+        .register-btn:active {
+            transform: translateY(0);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 24px 0;
+            color: var(--text3);
+            font-size: 12px;
+        }
+
+        .divider::before, .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: var(--border);
+        }
+
+        .features {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13px;
+            color: var(--text2);
+        }
+
+        .feature-icon {
+            width: 28px; height: 28px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 12px;
+            color: var(--text3);
+            animation: fadeUp 0.5s ease 0.2s both;
+        }
+
+        @keyframes fadeDown {
+            from { opacity: 0; transform: translateY(-16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+
+    <div class="register-wrap">
+
+        <div class="register-logo">
+            <div class="logo-icon">🎯</div>
+            <h1>Selection Copilot</h1>
+            <p>AI-система отбора кандидатов · inVision U</p>
+        </div>
+
+        <div class="register-card">
+            <h2>Добро пожаловать</h2>
+            <p class="subtitle">Введите данные для начала оценки</p>
+
+            <form action="/register" method="POST">
+                <div class="input-group">
+                    <label>Полное имя</label>
+                    <div class="input-with-icon">
+                        <span class="icon">👤</span>
+                        <input type="text" name="name" placeholder="Иван Иванов" required autocomplete="name">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label>Telegram</label>
+                    <div class="input-with-icon">
+                        <span class="icon">✈️</span>
+                        <input type="text" name="tg_nick" placeholder="@username" required>
+                    </div>
+                </div>
+
+                <button type="submit" class="register-btn">
+                    Начать оценку →
+                </button>
+            </form>
+
+            <div class="features">
+                <div class="feature-item">
+                    <div class="feature-icon">🧠</div>
+                    <span>AI-анализ эссе, достижений и лидерского потенциала</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">✨</div>
+                    <span>Обнаружение скрытого потенциала</span>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚖️</div>
+                    <span>Без предвзятости — только академические и поведенческие сигналы</span>
+                </div>
+            </div>
+        </div>
+
+        <p class="footer-note">
+            Decentrathon 5.0 · AI inDrive Track · inVision U
+        </p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selection Copilot — Анализ кандидата</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <style>
+        /* STEP FORM */
+        .step-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px;
+        }
+
+        .steps-indicator {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .step-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--border2);
+            transition: all 0.3s;
+        }
+
+        .step-dot.active {
+            background: var(--accent);
+            width: 24px;
+            border-radius: 4px;
+        }
+
+        .step-dot.done { background: var(--green); }
+
+        .step-label {
+            font-size: 13px;
+            color: var(--text3);
+        }
+
+        .form-step-block { display: none; }
+        .form-step-block.active { display: block; }
+
+        .step-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .step-subtitle {
+            color: var(--text3);
+            font-size: 14px;
+            margin-bottom: 24px;
+        }
+
+        .step-nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 28px;
+            gap: 12px;
+        }
+
+        .btn-next {
+            background: var(--accent);
+            color: white;
+            border: none;
+            padding: 13px 28px;
+            border-radius: var(--radius-sm);
+            font-family: 'Syne', sans-serif;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-next:hover {
+            background: var(--accent2);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 20px rgba(255,107,26,0.3);
+        }
+
+        .btn-back {
+            background: var(--surface2);
+            color: var(--text2);
+            border: 1px solid var(--border2);
+            padding: 13px 20px;
+            border-radius: var(--radius-sm);
+            font-family: 'Inter', sans-serif;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-back:hover {
+            border-color: var(--accent);
+            color: var(--text);
+        }
+
+        /* RESULT SECTION */
+        .result-score-big {
+            display: flex;
+            align-items: center;
+            gap: 28px;
+            margin-bottom: 24px;
+        }
+
+        .score-ring {
+            position: relative;
+            width: 110px;
+            height: 110px;
+            flex-shrink: 0;
+        }
+
+        .score-ring svg {
+            transform: rotate(-90deg);
+        }
+
+        .score-ring-num {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .score-ring-num span:first-child {
+            font-family: 'Syne', sans-serif;
+            font-size: 30px;
+            font-weight: 800;
+            color: var(--accent);
+            line-height: 1;
+        }
+
+        .score-ring-num span:last-child {
+            font-size: 11px;
+            color: var(--text3);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .score-meta h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        /* MINI BARS in result */
+        .mini-bars {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px 16px;
+            margin-top: 12px;
+        }
+
+        /* ARCHETYPE CARD */
+        .archetype-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: 999px;
+            padding: 8px 16px;
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 14px;
+        }
+
+        /* COMPARISON BAR */
+        .compare-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+            font-size: 13px;
+        }
+
+        .compare-label {
+            width: 130px;
+            color: var(--text2);
+            flex-shrink: 0;
+        }
+
+        .compare-track {
+            flex: 1;
+            height: 8px;
+            background: var(--surface3);
+            border-radius: 99px;
+            overflow: hidden;
+        }
+
+        .compare-fill {
+            height: 100%;
+            border-radius: 99px;
+            transition: width 0.8s ease;
+        }
+
+        .compare-num {
+            width: 30px;
+            text-align: right;
+            font-size: 12px;
+            color: var(--text3);
+        }
+    </style>
+</head>
+<body>
+<div class="page">
+
+    <!-- HERO -->
+    <div class="hero">
+        <h1>Selection Copilot</h1>
+        <p>ИИ-помощник приёмной комиссии inVision U. Оценка по лидерству, росту, командности и скрытому потенциалу.</p>
+        <div class="top-actions">
+            <a class="btn secondary" href="/shortlist">📋 Шорт-лист</a>
+            <a class="btn secondary" href="/download-template">⬇️ Шаблон CSV</a>
+        </div>
+    </div>
+
+    <!-- INFO CARDS -->
+    <div class="info-grid" style="margin-bottom: 24px;">
+        <div class="subcard">
+            <h3>🎯 Зачем это нужно</h3>
+            <p class="muted">GPA-only системы теряют кандидатов со скрытым потенциалом. Наша система находит лидеров, которых отсеивает baseline.</p>
+        </div>
+        <div class="subcard">
+            <h3>🧠 Как работает</h3>
+            <p class="muted">Input → Извлечение сигналов → Scoring Engine → Сравнение с baseline → Behavioral Layer → Рекомендация</p>
+        </div>
+        <div class="subcard">
+            <h3>⚖️ Что НЕ используется</h3>
+            <p class="muted">Пол · Этничность · Религия · Доход семьи · Политические взгляды · Медицинские данные</p>
+        </div>
+        <div class="subcard">
+            <h3>✅ Что даёт система</h3>
+            <ul>
+                <li>Score /100 с объяснением</li>
+                <li>Обнаружение скрытого потенциала</li>
+                <li>Архетипный поведенческий анализ</li>
+                <li>Сравнение с GPA-only baseline</li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- FORM CARD -->
+    <div class="card">
+        <form method="post" action="/analyze" enctype="multipart/form-data" id="mainForm">
+            <input type="hidden" name="tg_nick" value="{{ prefill_tg or '' }}">
+
+            <!-- STEP INDICATOR -->
+            <div class="step-header">
+                <div>
+                    <div class="step-title" id="stepTitle">Основные данные</div>
+                    <div class="step-subtitle" id="stepSubtitle">Шаг 1 из 4</div>
+                </div>
+                <div class="steps-indicator">
+                    <div class="step-dot active" id="dot0"></div>
+                    <div class="step-dot" id="dot1"></div>
+                    <div class="step-dot" id="dot2"></div>
+                    <div class="step-dot" id="dot3"></div>
+                </div>
+            </div>
+
+            <!-- STEP 1: Basic -->
+            <div class="form-step-block active" id="step0">
+                <label>Имя кандидата</label>
+                <input type="text" name="name" id="name" placeholder="Введите полное имя" value="{{ prefill_name or '' }}" required>
+
+                <label>GPA (0.0 — 4.0)</label>
+                <input type="number" step="0.1" min="0" max="4" name="gpa" id="gpa" placeholder="Например: 3.7" required>
+
+                <label>Архетип (опционально)</label>
+                <select name="archetype_name">
+                    <option value="">Не выбран</option>
+                    <option value="Hero">🦁 Hero — преодоление, стойкость</option>
+                    <option value="Creator">🛠️ Creator — создание, проекты</option>
+                    <option value="Sage">📚 Sage — знания, анализ</option>
+                    <option value="Explorer">🧭 Explorer — самостоятельность</option>
+                    <option value="Leader">⚡ Leader — организация, влияние</option>
+                </select>
+
+                <label>Прикрепить доказательства (фото, сертификаты)</label>
+                <input type="file" name="files" multiple>
+
+                <div class="step-nav">
+                    <button type="button" class="btn-next" onclick="nextStep(0)">Далее →</button>
+                </div>
+            </div>
+
+            <!-- STEP 2: Essay + Achievements -->
+            <div class="form-step-block" id="step1">
+                <label>Основное эссе</label>
+                <textarea name="essay" id="essay" rows="6" placeholder="Расскажите о себе, своём опыте и достижениях..." required></textarea>
+
+                <label>Достижения</label>
+                <textarea name="achievements" rows="4" placeholder="Награды, конкурсы, олимпиады, измеримые результаты..." required></textarea>
+
+                <label>Деятельность</label>
+                <textarea name="activities" rows="4" placeholder="Волонтёрство, клубы, руководящие роли, проекты..." required></textarea>
+
+                <div class="step-nav">
+                    <button type="button" class="btn-back" onclick="prevStep(1)">← Назад</button>
+                    <button type="button" class="btn-next" onclick="nextStep(1)">Далее →</button>
+                </div>
+            </div>
+
+            <!-- STEP 3: Motivation -->
+            <div class="form-step-block" id="step2">
+                <label>Почему inVision U?</label>
+                <textarea name="why_university" rows="4" placeholder="Почему именно этот университет соответствует вашим целям..." required></textarea>
+
+                <label>Вклад в университетскую среду</label>
+                <textarea name="university_contribution" rows="4" placeholder="Что вы дадите студентам, клубам, сообществу..." required></textarea>
+
+                <label>Вклад в развитие университета</label>
+                <textarea name="university_future_contribution" rows="4" placeholder="Долгосрочные инициативы, влияние на среду..." required></textarea>
+
+                <div class="step-nav">
+                    <button type="button" class="btn-back" onclick="prevStep(2)">← Назад</button>
+                    <button type="button" class="btn-next" onclick="nextStep(2)">Далее →</button>
+                </div>
+            </div>
+
+            <!-- STEP 4: Long-term -->
+            <div class="form-step-block" id="step3">
+                <label>Программы и проекты</label>
+                <textarea name="programs_participated" rows="4" placeholder="Программы, проекты, командные форматы..." required></textarea>
+
+                <label>Долгосрочные активности (6+ месяцев)</label>
+                <textarea name="long_term_activities" rows="4" placeholder="Чем занимался долго и чему это научило..." required></textarea>
+
+                <div class="step-nav">
+                    <button type="button" class="btn-back" onclick="prevStep(3)">← Назад</button>
+                    <button type="submit" class="btn-next">🔍 Анализировать</button>
+                </div>
+            </div>
+
+        </form>
+    </div>
+
+    <!-- RESULT -->
+    {% if result %}
+    <div class="card" style="margin-top: 24px;">
+
+        <!-- SCORE + RECOMMENDATION -->
+        <div class="result-score-big">
+            <div class="score-ring">
+                <svg width="110" height="110" viewBox="0 0 110 110">
+                    <circle cx="55" cy="55" r="46" fill="none" stroke="#222" stroke-width="8"/>
+                    <circle cx="55" cy="55" r="46" fill="none" stroke="#ff6b1a" stroke-width="8"
+                        stroke-dasharray="{{ result.final_score * 2.89 }} 289"
+                        stroke-linecap="round"/>
+                </svg>
+                <div class="score-ring-num">
+                    <span>{{ result.final_score }}</span>
+                    <span>score</span>
+                </div>
+            </div>
+            <div class="score-meta">
+                <h3>{{ result.name }}</h3>
+                {% if result.recommendation_type == "strong" %}
+                    <span class="badge badge-strong">✅ Продвигать вперёд</span>
+                {% elif result.recommendation_type == "review" %}
+                    <span class="badge badge-review">🔍 Ручной обзор</span>
+                {% else %}
+                    <span class="badge badge-hold">⏸ Удержание</span>
+                {% endif %}
+                {% if result.hidden_potential %}
+                <div style="margin-top: 8px;">
+                    <span class="hidden-badge">✨ Скрытый потенциал</span>
+                </div>
+                {% endif %}
+                <p class="muted" style="margin-top: 10px; font-size: 13px;">{{ result.committee_advice }}</p>
+            </div>
+        </div>
+
+        <!-- ARCHETYPE -->
+        <div class="archetype-pill">
+            {% if result.archetype == 'Hero' %}🦁
+            {% elif result.archetype == 'Creator' %}🛠️
+            {% elif result.archetype == 'Sage' %}📚
+            {% elif result.archetype == 'Explorer' %}🧭
+            {% elif result.archetype == 'Leader' %}⚡
+            {% else %}🌟{% endif %}
+            {{ result.archetype }} · {{ result.archetype_score }}/100
+        </div>
+
+        <!-- SCORE BARS -->
+        <div class="info-grid" style="margin-bottom: 16px;">
+            <div class="subcard">
+                <h3>📊 Детальные оценки</h3>
+                <div class="score-bar-wrap">
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Лидерство</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.leadership_potential }}%"></div></div>
+                        <span class="score-bar-num">{{ result.leadership_potential }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Рост</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.growth_trajectory }}%"></div></div>
+                        <span class="score-bar-num">{{ result.growth_trajectory }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Мотивация</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.motivation }}%"></div></div>
+                        <span class="score-bar-num">{{ result.motivation }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Командность</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.teamwork_readiness }}%"></div></div>
+                        <span class="score-bar-num">{{ result.teamwork_readiness }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Сообщество</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.community_orientation }}%"></div></div>
+                        <span class="score-bar-num">{{ result.community_orientation }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Академизм</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.academic_readiness }}%"></div></div>
+                        <span class="score-bar-num">{{ result.academic_readiness }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Аутентичность</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ result.authenticity }}%"></div></div>
+                        <span class="score-bar-num">{{ result.authenticity }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subcard">
+                <h3>📈 Сравнение с baseline</h3>
+                <div style="margin-top: 4px;">
+                    <div class="compare-row">
+                        <span class="compare-label">GPA Only</span>
+                        <div class="compare-track"><div class="compare-fill" style="width:{{ result.baseline_a_score }}%;background:var(--text3);"></div></div>
+                        <span class="compare-num">{{ result.baseline_a_score }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-label">GPA + Achievements</span>
+                        <div class="compare-track"><div class="compare-fill" style="width:{{ result.baseline_b_score }}%;background:var(--yellow);"></div></div>
+                        <span class="compare-num">{{ result.baseline_b_score }}</span>
+                    </div>
+                    <div class="compare-row">
+                        <span class="compare-label" style="color:var(--accent);font-weight:600;">Selection Copilot</span>
+                        <div class="compare-track"><div class="compare-fill" style="width:{{ result.final_score }}%;"></div></div>
+                        <span class="compare-num" style="color:var(--accent);">{{ result.final_score }}</span>
+                    </div>
+                </div>
+                <div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border); font-size: 13px; color: var(--text2);">
+                    Улучшение vs A: <strong style="color:var(--green);">+{{ result.improvement_vs_baseline_a }}</strong> &nbsp;|&nbsp;
+                    vs B: <strong style="color:var(--green);">+{{ result.improvement_vs_baseline_b }}</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- STRENGTHS + WEAKNESSES -->
+        <div class="info-grid" style="margin-bottom: 16px;">
+            <div class="subcard">
+                <h3>✅ Сильные стороны</h3>
+                <ul>
+                    {% for s in result.strengths %}
+                    <li><strong>{{ s.title }}</strong><br><span class="muted">{{ s.reason }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="subcard">
+                <h3>⚠️ Слабые стороны</h3>
+                <ul>
+                    {% for w in result.weaknesses_explained %}
+                    <li><strong>{{ w.title }}</strong><br><span class="muted">{{ w.reason }}</span></li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <div class="subcard">
+                <h3>🎯 Тип профиля</h3>
+                <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:8px;">{{ result.candidate_profile_type.title }}</div>
+                <p class="muted">{{ result.candidate_profile_type.reason }}</p>
+            </div>
+            <div class="subcard">
+                <h3>📋 План улучшения</h3>
+                <ul>
+                    {% for item in result.improvement_plan %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <div style="text-align:center; margin-top: 8px;">
+            <a class="btn secondary" href="/shortlist" style="font-size:15px;padding:13px 28px;">
+                📋 Открыть шорт-лист →
+            </a>
+        </div>
+
+    </div>
+    {% endif %}
+
+</div>
+
+<script>
+const steps = [
+    { title: "Основные данные", subtitle: "Шаг 1 из 4" },
+    { title: "Эссе и достижения", subtitle: "Шаг 2 из 4" },
+    { title: "Мотивация и вклад", subtitle: "Шаг 3 из 4" },
+    { title: "Опыт и активности", subtitle: "Шаг 4 из 4" },
+];
+
+let current = 0;
+
+function updateUI() {
+    document.getElementById('stepTitle').textContent = steps[current].title;
+    document.getElementById('stepSubtitle').textContent = steps[current].subtitle;
+
+    for (let i = 0; i < 4; i++) {
+        const dot = document.getElementById('dot' + i);
+        dot.className = 'step-dot';
+        if (i === current) dot.classList.add('active');
+        else if (i < current) dot.classList.add('done');
+    }
+}
+
+function nextStep(from) {
+    // Basic validation
+    const block = document.getElementById('step' + from);
+    const required = block.querySelectorAll('[required]');
+    for (let el of required) {
+        if (!el.value.trim()) {
+            el.focus();
+            el.style.borderColor = '#ef4444';
+            setTimeout(() => el.style.borderColor = '', 1500);
+            return;
+        }
+    }
+
+    document.getElementById('step' + from).classList.remove('active');
+    current = from + 1;
+    document.getElementById('step' + current).classList.add('active');
+    updateUI();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function prevStep(from) {
+    document.getElementById('step' + from).classList.remove('active');
+    current = from - 1;
+    document.getElementById('step' + current).classList.add('active');
+    updateUI();
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+</body>
+</html>

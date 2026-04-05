@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ candidate.name }} — Selection Copilot</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="page">
+
+        <div class="hero">
+            <h1>{{ candidate.name }}</h1>
+            <p>Подробный объяснимый разбор для приёмной комиссии.</p>
+            <div class="top-actions">
+                <a class="btn secondary" href="/shortlist">← Шорт-лист</a>
+                <a class="btn secondary" href="/apply">Новый кандидат</a>
+            </div>
+        </div>
+
+        <!-- MAIN RESULT CARD -->
+        <div class="card">
+            <div class="result-header">
+                <div>
+                    <div style="font-size:12px;text-transform:uppercase;letter-spacing:0.8px;color:var(--text3);margin-bottom:6px;">Рекомендация</div>
+                    <h2>
+                        {% if candidate.recommendation_type == "strong" %}✅
+                        {% elif candidate.recommendation_type == "review" %}🔍
+                        {% else %}⏸
+                        {% endif %}
+                        {{ candidate.recommendation }}
+                    </h2>
+                </div>
+                {% if candidate.recommendation_type == "strong" %}
+                    <span class="badge badge-strong">Продвигать вперёд</span>
+                {% elif candidate.recommendation_type == "review" %}
+                    <span class="badge badge-review">Ручной обзор</span>
+                {% else %}
+                    <span class="badge badge-hold">Удержание</span>
+                {% endif %}
+            </div>
+
+            <p class="muted" style="margin-bottom:20px;">
+                <strong style="color:var(--text);">Совет комиссии:</strong> {{ candidate.committee_advice }}<br>
+                <span style="margin-top:6px;display:block;"><strong style="color:var(--text);">Почему:</strong> {{ candidate.why_recommendation }}</span>
+            </p>
+
+            <!-- TOP METRICS -->
+            <div class="top-metrics">
+                <div class="metric-box">
+                    <div class="metric-label">Итоговый score</div>
+                    <div class="metric-value">{{ candidate.final_score }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">GPA</div>
+                    <div class="metric-value small">{{ candidate.gpa }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Доказательства</div>
+                    <div class="metric-value small">{{ candidate.evidence_strength }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Риск ИИ</div>
+                    <div class="metric-value small">{{ candidate.ai_assistance_risk }}</div>
+                </div>
+                <div class="metric-box">
+                    <div class="metric-label">Решение рецензента</div>
+                    <div class="metric-value small">{{ candidate.review_decision }}</div>
+                </div>
+            </div>
+
+            <!-- DECISION BUTTONS -->
+            <div class="card-actions-inline">
+                <form method="post" action="/candidate/{{ candidate.id }}/decision">
+                    <input type="hidden" name="decision" value="Advance">
+                    <button class="decision-btn decision-advance" type="submit">✅ Продвигать вперёд</button>
+                </form>
+                <form method="post" action="/candidate/{{ candidate.id }}/decision">
+                    <input type="hidden" name="decision" value="Review">
+                    <button class="decision-btn decision-review" type="submit">🔍 Ручной обзор</button>
+                </form>
+                <form method="post" action="/candidate/{{ candidate.id }}/decision">
+                    <input type="hidden" name="decision" value="Hold">
+                    <button class="decision-btn decision-hold" type="submit">⏸ Удержать</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- RADAR + SCORE BARS -->
+        <div class="info-grid" style="margin-bottom:20px;">
+            <div class="subcard">
+                <h3>Радар навыков</h3>
+                <div class="radar-wrap">
+                    <canvas id="radarChart" width="280" height="280"></canvas>
+                </div>
+            </div>
+
+            <div class="subcard">
+                <h3>Детальные оценки</h3>
+                <div class="score-bar-wrap">
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Лидерство</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.leadership_potential }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.leadership_potential }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Рост</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.growth_trajectory }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.growth_trajectory }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Мотивация</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.motivation }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.motivation }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Командность</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.teamwork_readiness }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.teamwork_readiness }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Сообщество</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.community_orientation }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.community_orientation }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Академизм</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.academic_readiness }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.academic_readiness }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Аутентичность</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.authenticity }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.authenticity }}</span>
+                    </div>
+                    <div class="score-bar-row">
+                        <span class="score-bar-label">Приверженность</span>
+                        <div class="score-bar-track"><div class="score-bar-fill" style="width:{{ candidate.long_term_commitment }}%"></div></div>
+                        <span class="score-bar-num">{{ candidate.long_term_commitment }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ARCHETYPE + PROFILE -->
+        <div class="info-grid" style="margin-bottom:20px;">
+            <div class="subcard">
+                <h3>Архетип</h3>
+                <div style="display:flex;align-items:center;gap:16px;margin-bottom:14px;">
+                    <div style="font-size:42px;">
+                        {% if candidate.archetype == 'Hero' %}🦁
+                        {% elif candidate.archetype == 'Creator' %}🛠️
+                        {% elif candidate.archetype == 'Sage' %}📚
+                        {% elif candidate.archetype == 'Explorer' %}🧭
+                        {% elif candidate.archetype == 'Leader' %}⚡
+                        {% else %}🌟{% endif %}
+                    </div>
+                    <div>
+                        <div style="font-family:'Syne',sans-serif;font-size:22px;font-weight:700;">{{ candidate.archetype }}</div>
+                        <div style="color:var(--text3);font-size:13px;">Score: {{ candidate.archetype_score }} / 100</div>
+                    </div>
+                </div>
+                <div class="badge
+                    {% if candidate.archetype_flag == 'high' %}badge-strong
+                    {% elif candidate.archetype_flag == 'medium' %}badge-review
+                    {% else %}badge-hold{% endif %}">
+                    Potential: {{ candidate.archetype_flag }}
+                </div>
+            </div>
+
+            <div class="subcard">
+                <h3>Тип профиля</h3>
+                <div style="font-family:'Syne',sans-serif;font-size:20px;font-weight:700;margin-bottom:10px;">
+                    {{ candidate.candidate_profile_type.title }}
+                </div>
+                <p class="muted">{{ candidate.candidate_profile_type.reason }}</p>
+                {% if candidate.hidden_potential %}
+                <div style="margin-top:14px;">
+                    <span class="hidden-badge">✨ Скрытый потенциал</span>
+                </div>
+                {% endif %}
+            </div>
+
+            <div class="subcard">
+                <h3>Прогноз поведения</h3>
+                <div style="font-family:'Syne',sans-serif;font-size:18px;font-weight:700;margin-bottom:10px;">
+                    {{ candidate.campus_behavior_forecast.title }}
+                </div>
+                <p class="muted">{{ candidate.campus_behavior_forecast.reason }}</p>
+            </div>
+
+            <div class="subcard">
+                <h3>Ценность для университета</h3>
+                <p style="font-weight:600;margin-bottom:10px;">{{ candidate.university_value.summary }}</p>
+                <ul>
+                    {% for point in candidate.university_value.points %}
+                    <li>{{ point }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- STRENGTHS & WEAKNESSES -->
+        <div class="info-grid" style="margin-bottom:20px;">
+            <div class="subcard">
+                <h3>✅ Сильные стороны</h3>
+                <ul>
+                    {% for s in candidate.strengths %}
+                    <li>
+                        <strong>{{ s.title }}</strong><br>
+                        <span class="muted">{{ s.reason }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="subcard">
+                <h3>⚠️ Слабые стороны</h3>
+                <ul>
+                    {% for w in candidate.weaknesses_explained %}
+                    <li>
+                        <strong>{{ w.title }}</strong><br>
+                        <span class="muted">{{ w.reason }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="subcard">
+                <h3>🚨 Поведенческие риски</h3>
+                <ul>
+                    {% for risk in candidate.behavioral_risks %}
+                    <li>
+                        <strong>{{ risk.title }}</strong><br>
+                        <span class="muted">{{ risk.reason }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="subcard">
+                <h3>📋 План улучшения</h3>
+                <ul>
+                    {% for item in candidate.improvement_plan %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- BASELINE + FAIRNESS -->
+        <div class="info-grid" style="margin-bottom:20px;">
+            <div class="subcard">
+                <h3>📊 Сравнение с baseline</h3>
+                <div style="display:flex;flex-direction:column;gap:12px;margin-top:4px;">
+                    <div>
+                        <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">GPA Only (Baseline A)</div>
+                        <div class="score-bar-track" style="height:8px;">
+                            <div class="score-bar-fill" style="width:{{ candidate.baseline_a_score }}%;background:var(--text3);"></div>
+                        </div>
+                        <div style="font-size:13px;color:var(--text2);margin-top:4px;">{{ candidate.baseline_a_score }}/100 — {{ candidate.baseline_a_label }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">GPA + Achievements (Baseline B)</div>
+                        <div class="score-bar-track" style="height:8px;">
+                            <div class="score-bar-fill" style="width:{{ candidate.baseline_b_score }}%;background:var(--yellow);"></div>
+                        </div>
+                        <div style="font-size:13px;color:var(--text2);margin-top:4px;">{{ candidate.baseline_b_score }}/100 — {{ candidate.baseline_b_label }}</div>
+                    </div>
+                    <div>
+                        <div style="font-size:12px;color:var(--text3);margin-bottom:4px;">Selection Copilot</div>
+                        <div class="score-bar-track" style="height:8px;">
+                            <div class="score-bar-fill" style="width:{{ candidate.final_score }}%;"></div>
+                        </div>
+                        <div style="font-size:13px;color:var(--accent);margin-top:4px;font-weight:600;">{{ candidate.final_score }}/100</div>
+                    </div>
+                </div>
+                <div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);font-size:13px;color:var(--text2);">
+                    Улучшение vs A: <strong style="color:var(--green);">+{{ candidate.improvement_vs_baseline_a }}</strong> &nbsp;|&nbsp;
+                    vs B: <strong style="color:var(--green);">+{{ candidate.improvement_vs_baseline_b }}</strong>
+                </div>
+            </div>
+
+            <div class="subcard">
+                <h3>🤖 Риск ИИ-помощи</h3>
+                <div class="badge
+                    {% if candidate.ai_assistance_risk == 'Низкий' %}badge-strong
+                    {% elif candidate.ai_assistance_risk == 'Средний' %}badge-review
+                    {% else %}badge-hold{% endif %}" style="margin-bottom:14px;">
+                    {{ candidate.ai_assistance_risk }}
+                </div>
+                {% if candidate.ai_risk_signals %}
+                <ul>
+                    {% for item in candidate.ai_risk_signals %}
+                    <li>{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="muted">Сигналов риска не обнаружено.</p>
+                {% endif %}
+            </div>
+
+            <div class="subcard">
+                <h3>⚖️ Fairness</h3>
+                <p style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">Используется</p>
+                <ul>
+                    {% for item in candidate.fairness.used_features %}
+                    <li style="color:var(--green);">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+                <p style="font-size:12px;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin:12px 0 8px;">Не используется</p>
+                <ul>
+                    {% for item in candidate.fairness.excluded_features %}
+                    <li style="color:var(--red);">{{ item }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <div class="subcard">
+                <h3>🎯 Потенциал вклада</h3>
+                <div style="font-weight:700;font-size:16px;margin-bottom:10px;">{{ candidate.contribution_potential.level }}</div>
+                <p class="muted" style="margin-bottom:12px;">{{ candidate.contribution_potential.reason }}</p>
+                <ul>
+                    {% for r in candidate.contribution_potential.roles %}
+                    <li>{{ r }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+
+        <!-- RAW PROFILE -->
+        <div class="card">
+            <h2 class="section-title">Исходный профиль</h2>
+            <div class="info-grid">
+                <div class="subcard full-width">
+                    <h3>Эссе</h3>
+                    <p class="muted">{{ candidate.essay }}</p>
+                </div>
+                <div class="subcard">
+                    <h3>Достижения</h3>
+                    <p class="muted">{{ candidate.achievements }}</p>
+                </div>
+                <div class="subcard">
+                    <h3>Деятельность</h3>
+                    <p class="muted">{{ candidate.activities }}</p>
+                </div>
+                <div class="subcard">
+                    <h3>Почему этот университет</h3>
+                    <p class="muted">{{ candidate.why_university }}</p>
+                </div>
+                <div class="subcard">
+                    <h3>Вклад в среду</h3>
+                    <p class="muted">{{ candidate.university_contribution }}</p>
+                </div>
+                <div class="subcard">
+                    <h3>Долгосрочные активности</h3>
+                    <p class="muted">{{ candidate.long_term_activities }}</p>
+                </div>
+            </div>
+
+            {% if candidate.evidence_files %}
+            <div style="margin-top:20px;">
+                <h3 style="font-family:'Syne',sans-serif;font-size:16px;margin-bottom:14px;color:var(--text2);">Прикреплённые доказательства</h3>
+                <div class="evidence-grid">
+                    {% for f in candidate.evidence_files %}
+                    <div class="evidence-item">
+                        {% if f.is_image %}
+                        <a href="{{ f.path }}" target="_blank">
+                            <img src="{{ f.path }}" alt="{{ f.filename }}" class="evidence-image">
+                        </a>
+                        {% else %}
+                        <a class="table-link" href="{{ f.path }}" target="_blank">📎 {{ f.filename }}</a>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+    <script>
+    const ctx = document.getElementById('radarChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Лидерство', 'Рост', 'Мотивация', 'Командность', 'Сообщество', 'Академизм', 'Аутентичность'],
+            datasets: [{
+                label: '{{ candidate.name }}',
+                data: [
+                    {{ candidate.leadership_potential }},
+                    {{ candidate.growth_trajectory }},
+                    {{ candidate.motivation }},
+                    {{ candidate.teamwork_readiness }},
+                    {{ candidate.community_orientation }},
+                    {{ candidate.academic_readiness }},
+                    {{ candidate.authenticity }}
+                ],
+                backgroundColor: 'rgba(255, 107, 26, 0.12)',
+                borderColor: '#ff6b1a',
+                borderWidth: 2,
+                pointBackgroundColor: '#ff6b1a',
+                pointBorderColor: '#ff6b1a',
+                pointRadius: 4,
+            }]
+        },
+        options: {
+            responsive: false,
+            scales: {
+                r: {
+                    min: 0, max: 100,
+                    ticks: { display: false, stepSize: 25 },
+                    grid: { color: 'rgba(255,255,255,0.06)' },
+                    angleLines: { color: 'rgba(255,255,255,0.06)' },
+                    pointLabels: {
+                        color: '#a0a0a0',
+                        font: { size: 12, family: 'Inter' }
+                    }
+                }
+            },
+            plugins: {
+                legend: { display: false }
+            }
+        }
+    });
+    </script>
+</body>
+</html>
