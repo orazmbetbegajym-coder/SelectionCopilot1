@@ -1,9 +1,9 @@
 def sort_candidates(candidates: list):
     def strength_value(item):
         mapping = {
-            "Strong": 3,
-            "Medium": 2,
-            "Weak": 1
+            "Сильная": 3,
+            "Средняя": 2,
+            "Слабая": 1
         }
         return mapping.get(item.get("evidence_strength", "Weak"), 1)
 
