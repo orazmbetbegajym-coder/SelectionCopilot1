@@ -606,6 +606,7 @@ def analyze_candidate_text(
 
     # ── AI LAYER ──────────────────────────────────────────
     ai_result = ai_analyze_essay(
+        print("ai result:",ai_result)
         essay=essay, achievements=achievements, activities=activities,
         why_university=why_university, university_contribution=university_contribution,
         long_term_activities=long_term_activities, gpa=gpa
