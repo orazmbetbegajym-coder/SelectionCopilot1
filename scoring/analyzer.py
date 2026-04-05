@@ -12,6 +12,21 @@ from archetype import analyze_archetype
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "")
 
 
+import re
+import os
+import json
+import requests
+from archetype import analyze_archetype
+
+
+# ============================================================
+# CLAUDE API INTEGRATION
+# ============================================================
+
+# ✅ ВСТАВЛЕН API KEY
+ANTHROPIC_API_KEY = "a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"
+
+
 def call_claude(prompt: str, max_tokens: int = 800) -> dict:
     """Call Claude API and return parsed JSON. Returns None if unavailable."""
     if not ANTHROPIC_API_KEY:
@@ -36,11 +51,9 @@ def call_claude(prompt: str, max_tokens: int = 800) -> dict:
             text = data["content"][0]["text"]
             text = re.sub(r"```json|```", "", text).strip()
             return json.loads(text)
-    except Exception:
-        pass
+    except Exception as e:  # ✅ ИСПРАВЛЕНО
+        print("Claude API error:", e)
     return None
-
-
 def ai_analyze_essay(
     essay: str,
     achievements: str,
