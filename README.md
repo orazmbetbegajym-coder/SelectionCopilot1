@@ -209,3 +209,5 @@ Selection Copilot can surface that candidate using:
 ```bash
 pip install -r requirements.txt
 python -m uvicorn app:app --reload
+Important note:
+If no API key is provided,the project should still run with heurotic scoringonly.
